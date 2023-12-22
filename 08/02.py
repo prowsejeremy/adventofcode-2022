@@ -1,7 +1,7 @@
 # Open data file
-# Number 5 on the 4th row has the best score
-with open ("data-test.txt", "r") as dataFile:
+with open ("data.txt", "r") as dataFile:
   rawData = dataFile.read()
+  rawArray = rawData.split()
 
 # Define key variables
 rows = []
@@ -11,47 +11,76 @@ countedItems = []
 # Build row and column lists from the raw data
 holdingRow = []
 rowIndex = 0
-for index, char in enumerate(rawData):
-  if (char != '\n'):
-    charObj = {index:int(char)}
-    holdingRow.append(charObj)
+
+for index, row in enumerate(rawArray):
+  for charIndex, char in enumerate(row):
     try:
-      columns[rowIndex].append(charObj)
+      rows[index].append(int(char))
     except:
-      columns.append([charObj])
-    
-    rowIndex += 1
-  elif (char == '\n'):
-    rows.append(holdingRow)
-    holdingRow=[]
-    rowIndex = 0
+      rows.append([int(char)])
+
+    try:
+      columns[charIndex].append(int(char))
+    except:
+      columns.append([int(char)])
 
 
-def checkAndAppend(item, highestItem):
-  itemID = int(list(item.keys())[0])
-  itemVal = int(list(item.values())[0])
-  if (highestItem < itemVal):
-    if (not itemID in countedItems):
-      countedItems.append(itemID)
-    highestItem = itemVal
+def getScore(current, row):
+  score = 0
+  for i in row:
+
+    if (current <= i):
+      score += 1
+      break
+    else:
+      score += 1
+
+  return score
+
+
+def process(startIndex, row):
+
+  if ((startIndex == 0) or (startIndex == (len(row)-1))):
+    return 0
+  else:
+
+    current = row[startIndex]
+    forwardScore = 0
+    backwardScore = 0
+
+    forwardScore = getScore(current, row[startIndex+1:])
+
+    # Get items up to our starting index, and reverse the order
+    # to simulate looping in reverse.
+    reversed = row[:startIndex]
+    reversed.reverse()
+
+    backwardScore = getScore(current, reversed)
   
-  return highestItem
+    return forwardScore * backwardScore
 
 
-def processList(list):
-  highestItem = -1
-  for item in list:
-    highestItem = checkAndAppend(item, highestItem)
+def main():
+  scores = []
+
+  for rowIndex, row in enumerate(rows):
+
+    for rowItemIndex, rowItem in enumerate(row):
+      
+      # Rows
+      rowScore = process(rowItemIndex, row)
+
+      # Columns
+      col = columns[rowItemIndex]
+      colItemIndex = rowIndex
+
+      colScore = process(colItemIndex, col)
+
+      totalScore = rowScore * colScore
+      scores.append(totalScore)
+
+  print('Highest:', max(scores))
 
 
-# Iterate over rows
-for row in rows:
-  processList(row)
-  processList(reversed(row))
-
-# Iterate over columns
-for column in columns:
-  processList(column)
-  processList(reversed(column))
-
-print("Total items visible:", len(countedItems))
+# Run
+main()
